@@ -94,7 +94,7 @@ class SMSCounter
 
     public function getAddedGsm7bitExMap()
     {
-        return [12, 91, 92, 93, 94, 123, 124, 125, 126, 8364];
+        return [];
     }
 
     public function getGsm7bitExMap()
