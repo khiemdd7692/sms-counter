@@ -94,7 +94,7 @@ class SMSCounter
 
     public function getAddedGsm7bitExMap()
     {
-        return [];
+        return [12, 91, 92, 93, 94, 123, 124, 125, 126, 8364];
     }
 
     public function getGsm7bitExMap()
@@ -180,9 +180,9 @@ class SMSCounter
      *
      * @return \stdClass Object with params encoding,length, per_message, remaining, messages
      */
-    public function count($text)
+    public function count($text, array $special = null)
     {
-        return $this->doCount($text, false);
+        return $this->doCount($text, $special, false);
     }
 
     /**
@@ -191,23 +191,23 @@ class SMSCounter
      *
      * @return \stdClass Object with params encoding,length, per_message, remaining, messages
      */
-    public function countWithShiftTables($text)
+    public function countWithShiftTables($text, $special = null)
     {
-        return $this->doCount($text, true);
+        return $this->doCount($text, $special, true);
     }
 
     /**
      * @return \stdClass Object with params encoding,length, per_message, remaining, messages
      */
-    private function doCount($text, $supportShiftTables)
+    private function doCount($text, $special, $supportShiftTables)
     {
         $unicodeArray = $this->utf8ToUnicode($text);
 
         // variable to catch if any ex chars while encoding detection.
         $exChars = [];
         $encoding = $supportShiftTables
-            ? $this->detectEncodingWithShiftTables($text, $exChars)
-            : $this->detectEncoding($text, $exChars);
+            ? $this->detectEncodingWithShiftTables($text, $special, $exChars)
+            : $this->detectEncoding($text, $special, $exChars);
 
         $length = count($unicodeArray);
 
@@ -293,7 +293,7 @@ class SMSCounter
      *
      * @return string (GSM_7BIT|GSM_7BIT_EX|UTF16)
      */
-    public function detectEncoding($text, &$exChars)
+    public function detectEncoding($text, $special, &$exChars)
     {
         if (!is_array($text)) {
             $text = $this->utf8ToUnicode($text);
@@ -304,10 +304,16 @@ class SMSCounter
             return self::UTF16;
         }
 
-        $exChars = array_intersect($text, $this->getAddedGsm7bitExMap());
+        if(!is_null($special)){
+            $exChars = array_intersect($text, $special);
+        }else{
+            $exChars = array_intersect($text, $this->getAddedGsm7bitExMap());
+        }
+
         if (count($exChars)) {
             return self::GSM_7BIT_EX;
         }
+
 
         return self::GSM_7BIT;
     }
@@ -318,7 +324,7 @@ class SMSCounter
      *
      * @return string (GSM_7BIT|GSM_7BIT_EX|UTF16)
      */
-    public function detectEncodingWithShiftTables($text, &$exChars)
+    public function detectEncodingWithShiftTables($text, $special, &$exChars)
     {
         if (!is_array($text)) {
             $text = $this->utf8ToUnicode($text);
